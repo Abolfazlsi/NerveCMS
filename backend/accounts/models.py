@@ -5,9 +5,9 @@ from tenants.models import Business
 
 class User(AbstractUser):
     """
-    Every user belongs to exactly one Business and has a role that
-    determines what they can do within it. `owner` is set automatically
-    for whoever signs up and creates the business.
+    هر کاربر دقیقاً به یک کسب‌وکار تعلق دارد و نقشی دارد که
+    سطح دسترسی او را در آن کسب‌وکار مشخص می‌کند.
+    نقش «مالک» به‌صورت خودکار برای کسی که ثبت‌نام کرده و کسب‌وکار را ایجاد می‌کند تنظیم می‌شود.
     """
 
     ROLE_OWNER = "owner"
@@ -16,18 +16,41 @@ class User(AbstractUser):
     ROLE_STAFF = "staff"
 
     ROLE_CHOICES = [
-        (ROLE_OWNER, "Owner"),
-        (ROLE_ADMIN, "Admin"),
-        (ROLE_MANAGER, "Manager"),
-        (ROLE_STAFF, "Staff"),
+        (ROLE_OWNER, "مالک"),
+        (ROLE_ADMIN, "مدیر سیستم"),
+        (ROLE_MANAGER, "مدیر"),
+        (ROLE_STAFF, "کارمند"),
     ]
 
     business = models.ForeignKey(
-        Business, on_delete=models.CASCADE, related_name="members", null=True, blank=True
+        Business,
+        on_delete=models.CASCADE,
+        related_name="members",
+        null=True,
+        blank=True,
+        verbose_name="کسب‌وکار",
     )
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_STAFF)
-    phone = models.CharField(max_length=30, blank=True)
-    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default=ROLE_STAFF,
+        verbose_name="نقش",
+    )
+    phone = models.CharField(
+        max_length=30,
+        blank=True,
+        verbose_name="تلفن",
+    )
+    avatar = models.ImageField(
+        upload_to="avatars/",
+        blank=True,
+        null=True,
+        verbose_name="تصویر پروفایل",
+    )
+
+    class Meta:
+        verbose_name = "کاربر"
+        verbose_name_plural = "کاربران"
 
     @property
     def is_business_admin(self):

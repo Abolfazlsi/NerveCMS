@@ -176,7 +176,7 @@ export default function InventoryPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-ink-100 text-left text-ink-500">
+                <tr className="border-b border-ink-100 text-right text-ink-500">
                   <th className="px-5 py-3 font-medium">محصول</th>
                   <th className="px-5 py-3 font-medium hidden sm:table-cell">دسته‌بندی</th>
                   <th className="px-5 py-3 font-medium">موجودی</th>

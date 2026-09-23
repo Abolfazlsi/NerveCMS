@@ -25,17 +25,21 @@ ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1", ca
 # Applications
 # --------------------------------------------------------------------------
 INSTALLED_APPS = [
+    'django_daisy',
     "django.contrib.admin",
     "django.contrib.auth",
+    'django.contrib.humanize',
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
     # third party
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
     "django_filters",
+
     # local apps
     "tenants",
     "accounts",

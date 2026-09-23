@@ -156,7 +156,7 @@ export default function OrdersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-ink-100 text-left text-ink-500">
+                <tr className="border-b border-ink-100 text-right text-ink-500">
                   <th className="px-5 py-3 font-medium">سفارش</th>
                   <th className="px-5 py-3 font-medium">مشتری</th>
                   <th className="px-5 py-3 font-medium hidden sm:table-cell">تاریخ</th>

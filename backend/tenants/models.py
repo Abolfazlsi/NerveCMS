@@ -5,33 +5,59 @@ import uuid
 
 class Business(models.Model):
     """
-    A single tenant on the platform. Every business-scoped record in the
-    system (customers, products, orders, tasks...) carries a FK to a
-    Business so that data for different companies never mixes.
+    یک مستأجر (tenant) در پلتفرم.
+    هر رکورد مرتبط با کسب‌وکار (مشتریان، محصولات، سفارش‌ها، وظایف و ...)
+    یک کلید خارجی به Business دارد تا داده‌های شرکت‌های مختلف با هم مخلوط نشوند.
     """
 
     INDUSTRY_CHOICES = [
-        ("general", "General"),
-        ("retail", "Retail"),
-        ("catering", "Catering & Food Service"),
-        ("services", "Professional Services"),
-        ("wholesale", "Wholesale / Distribution"),
-        ("manufacturing", "Manufacturing"),
-        ("other", "Other"),
+        ("general", "عمومی"),
+        ("retail", "خرده‌فروشی"),
+        ("catering", "خدمات غذایی و پذیرایی"),
+        ("services", "خدمات حرفه‌ای"),
+        ("wholesale", "عمده‌فروشی / توزیع"),
+        ("manufacturing", "تولید"),
+        ("other", "سایر"),
     ]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=150)
-    slug = models.SlugField(max_length=170, unique=True, blank=True)
-    industry = models.CharField(max_length=30, choices=INDUSTRY_CHOICES, default="general")
-    currency = models.CharField(max_length=8, default="USD")
-    logo = models.ImageField(upload_to="business_logos/", blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name="شناسه",
+    )
+    name = models.CharField(max_length=150, verbose_name="نام کسب‌وکار")
+    slug = models.SlugField(
+        max_length=170,
+        unique=True,
+        blank=True,
+        verbose_name="اسلاگ",
+    )
+    industry = models.CharField(
+        max_length=30,
+        choices=INDUSTRY_CHOICES,
+        default="general",
+        verbose_name="صنعت",
+    )
+    currency = models.CharField(
+        max_length=8,
+        default="USD",
+        verbose_name="واحد پول",
+    )
+    logo = models.ImageField(
+        upload_to="business_logos/",
+        blank=True,
+        null=True,
+        verbose_name="لوگو",
+    )
+    is_active = models.BooleanField(default=True, verbose_name="فعال")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="تاریخ به‌روزرسانی")
 
     class Meta:
         ordering = ["name"]
+        verbose_name = "کسب‌وکار"
+        verbose_name_plural = "کسب‌وکارها"
 
     def save(self, *args, **kwargs):
         if not self.slug:

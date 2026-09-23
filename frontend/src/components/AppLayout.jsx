@@ -76,7 +76,7 @@ function SidebarContent({ onNavigate }) {
           className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm text-ink-300 hover:bg-ink-900 hover:text-white transition-colors"
         >
           <LogOut className="w-[18px] h-[18px]" />
-          Log out
+          خروج از حساب کاربری
         </button>
       </div>
     </div>

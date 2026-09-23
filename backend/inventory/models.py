@@ -4,44 +4,90 @@ from tenants.models import Business
 
 
 class Category(models.Model):
-    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="categories")
-    name = models.CharField(max_length=120)
-    description = models.CharField(max_length=300, blank=True)
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name="categories",
+        verbose_name="کسب‌وکار",
+    )
+    name = models.CharField(max_length=120, verbose_name="نام")
+    description = models.CharField(max_length=300, blank=True, verbose_name="توضیحات")
 
     class Meta:
         ordering = ["name"]
         unique_together = ("business", "name")
-        verbose_name_plural = "categories"
+        verbose_name = "دسته‌بندی"
+        verbose_name_plural = "دسته‌بندی‌ها"
 
     def __str__(self):
         return self.name
 
 
 class Product(models.Model):
-    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="products")
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name="products",
+        verbose_name="کسب‌وکار",
+    )
     category = models.ForeignKey(
-        Category, on_delete=models.SET_NULL, null=True, blank=True, related_name="products"
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="products",
+        verbose_name="دسته‌بندی",
     )
-    sku = models.CharField(max_length=60)
-    name = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    unit = models.CharField(max_length=30, default="unit", help_text="e.g. unit, kg, box, hour")
-    cost_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    quantity_in_stock = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    sku = models.CharField(max_length=60, verbose_name="کد کالا (SKU)")
+    name = models.CharField(max_length=200, verbose_name="نام محصول")
+    description = models.TextField(blank=True, verbose_name="توضیحات")
+    unit = models.CharField(
+        max_length=30,
+        default="unit",
+        help_text="مثلاً عدد، کیلوگرم، جعبه، ساعت",
+        verbose_name="واحد",
+    )
+    cost_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="قیمت تمام‌شده",
+    )
+    unit_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="قیمت فروش",
+    )
+    quantity_in_stock = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="موجودی انبار",
+    )
     reorder_level = models.DecimalField(
-        max_digits=12, decimal_places=2, default=10,
-        help_text="Stock alert triggers at or below this level",
+        max_digits=12,
+        decimal_places=2,
+        default=10,
+        help_text="هشدار کمبود موجودی وقتی موجودی به این مقدار یا کمتر برسد فعال می‌شود",
+        verbose_name="حد سفارش مجدد",
     )
-    image = models.ImageField(upload_to="products/", blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    image = models.ImageField(
+        upload_to="products/",
+        blank=True,
+        null=True,
+        verbose_name="تصویر",
+    )
+    is_active = models.BooleanField(default=True, verbose_name="فعال")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="تاریخ به‌روزرسانی")
 
     class Meta:
         ordering = ["name"]
         unique_together = ("business", "sku")
         indexes = [models.Index(fields=["business", "is_active"])]
+        verbose_name = "محصول"
+        verbose_name_plural = "محصولات"
 
     @property
     def is_low_stock(self):
@@ -59,18 +105,52 @@ class StockMovement(models.Model):
     IN = "in"
     OUT = "out"
     ADJUSTMENT = "adjustment"
-    TYPE_CHOICES = [(IN, "Stock In"), (OUT, "Stock Out"), (ADJUSTMENT, "Adjustment")]
 
-    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="stock_movements")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="movements")
-    movement_type = models.CharField(max_length=15, choices=TYPE_CHOICES)
-    quantity = models.DecimalField(max_digits=12, decimal_places=2)
-    reason = models.CharField(max_length=255, blank=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    TYPE_CHOICES = [
+        (IN, "ورود به انبار"),
+        (OUT, "خروج از انبار"),
+        (ADJUSTMENT, "تنظیم موجودی"),
+    ]
+
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name="stock_movements",
+        verbose_name="کسب‌وکار",
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="movements",
+        verbose_name="محصول",
+    )
+    movement_type = models.CharField(
+        max_length=15,
+        choices=TYPE_CHOICES,
+        verbose_name="نوع حرکت",
+    )
+    quantity = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="مقدار",
+    )
+    reason = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="دلیل",
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="ایجادکننده",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = "حرکت موجودی"
+        verbose_name_plural = "حرکات موجودی"
 
     def save(self, *args, **kwargs):
         is_new = self._state.adding
