@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  /* --- Color: template default palette --- turquoise as the primary
+     brand color, orange as the secondary accent. This is the ONE place
+     to edit when reskinning the template for a new client — every
+     button, active nav state, link, and focus ring below reads from
+     these tokens, so changing these four brand-* values (plus the two
+     accent-* values, if used) restyles the whole app. Status colors
+     (good/warn/bad) are kept separate on purpose — they carry meaning
+     (paid vs overdue vs low-stock) and shouldn't shift with branding. */
+  --color-ink-950: #0b1120;
+  --color-ink-900: #0f172a;
+  --color-ink-800: #1e293b;
+  --color-ink-700: #334155;
+  --color-ink-500: #64748b;
+  --color-ink-300: #cbd5e1;
+  --color-ink-100: #f1f5f9;
+  --color-canvas: #f8fafc;
+
+  /* Primary brand — Webelop turquoise (#1abc9c) */
+  --color-brand-600: #159a7f;
+  --color-brand-500: #1abc9c;
+  --color-brand-400: #43c8ad;
+  --color-brand-100: #e3f6f3;
+
+  /* Secondary accent — Webelop orange (#fe6902) */
+  --color-accent-600: #d75901;
+  --color-accent-500: #fe6902;
+  --color-accent-400: #fe842f;
+  --color-accent-100: #feede0;
+
+  --color-good-600: #059669;
+  --color-good-500: #10b981;
+  --color-good-100: #d1fae5;
+
+  --color-warn-600: #d97706;
+  --color-warn-500: #f59e0b;
+  --color-warn-100: #fef3c7;
+
+  --color-bad-600: #e11d48;
+  --color-bad-500: #f43f5e;
+  --color-bad-100: #ffe4e6;
+
+  /* --- Type --- */
+  --font-display: "Vazir", sans-serif;
+  --font-sans: "Vazir", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Vazir", ui-monospace, monospace;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-300);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
