@@ -35,3 +35,20 @@ class IsOwnerOrAdmin(permissions.BasePermission):
             and request.user.business_id
             and request.user.role in ("owner", "admin")
         )
+
+
+class IsSameBusinessObject(permissions.BasePermission):
+    """
+    Ensures that related objects belong to the same business
+    as the authenticated user.
+    """
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.business_id
+        )
+
+    def has_object_permission(self, request, view, obj):
+        return getattr(obj, "business_id", None) == request.user.business_id

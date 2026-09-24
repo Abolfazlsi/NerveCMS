@@ -14,6 +14,16 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ["id", "product", "product_name", "sku", "quantity", "unit_price", "line_total"]
         read_only_fields = ["id"]
 
+    def validate_product(self, value):
+        request = self.context.get("request")
+
+        if request and value.business_id != request.user.business_id:
+            raise serializers.ValidationError(
+                "این محصول متعلق به کسب‌وکار شما نیست."
+            )
+
+        return value
+
 
 class OrderSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source="customer.name", read_only=True)
@@ -32,6 +42,16 @@ class OrderSerializer(serializers.ModelSerializer):
         if not items:
             raise serializers.ValidationError("An order needs at least one item.")
         return items
+
+    def validate_customer(self, value):
+        request = self.context.get("request")
+
+        if request and value.business_id != request.user.business_id:
+            raise serializers.ValidationError(
+                "این مشتری متعلق به کسب‌وکار شما نیست."
+            )
+
+        return value
 
     @transaction.atomic
     def create(self, validated_data):

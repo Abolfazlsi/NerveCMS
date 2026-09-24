@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, StockMovement
+from .models import Category, Product, StockMovement, Warehouse, WarehouseStock
 
 
 @admin.register(Category)
@@ -18,3 +18,8 @@ class ProductAdmin(admin.ModelAdmin):
 class StockMovementAdmin(admin.ModelAdmin):
     list_display = ("product", "movement_type", "quantity", "created_at")
     list_filter = ("movement_type",)
+
+
+admin.site.register(Warehouse)
+admin.site.register(WarehouseStock)
+

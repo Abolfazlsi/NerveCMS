@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from tenants.models import Business
+from django.db import models, transaction
 
 
 class Category(models.Model):
@@ -21,6 +22,61 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Warehouse(models.Model):
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name="warehouses",
+        verbose_name="کسب‌وکار",
+    )
+    name = models.CharField(
+        max_length=150,
+        verbose_name="نام انبار",
+    )
+    code = models.CharField(
+        max_length=50,
+        verbose_name="کد انبار",
+    )
+    address = models.CharField(
+        max_length=300,
+        blank=True,
+        verbose_name="آدرس",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="فعال",
+    )
+    is_default = models.BooleanField(
+        default=False,
+        verbose_name="انبار پیش‌فرض",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="تاریخ ایجاد",
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="تاریخ به‌روزرسانی",
+    )
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["business", "code"],
+                name="unique_warehouse_code_per_business",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["business", "is_active"]),
+        ]
+        verbose_name = "انبار"
+        verbose_name_plural = "انبارها"
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
 
 
 class Product(models.Model):
@@ -101,6 +157,61 @@ class Product(models.Model):
         return f"{self.name} ({self.sku})"
 
 
+class WarehouseStock(models.Model):
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.CASCADE,
+        related_name="stocks",
+        verbose_name="انبار",
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="warehouse_stocks",
+        verbose_name="محصول",
+    )
+    quantity = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="موجودی",
+    )
+    reorder_level = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=10,
+        verbose_name="حد سفارش مجدد",
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="آخرین بروزرسانی",
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["warehouse", "product"],
+                name="unique_product_per_warehouse",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["warehouse", "product"]),
+        ]
+        verbose_name = "موجودی انبار"
+        verbose_name_plural = "موجودی انبارها"
+
+    @property
+    def is_low_stock(self):
+        return self.quantity <= self.reorder_level
+
+    @property
+    def stock_value(self):
+        return self.quantity * self.product.cost_price
+
+    def __str__(self):
+        return f"{self.warehouse.name} - {self.product.name}: {self.quantity}"
+
+
 class StockMovement(models.Model):
     IN = "in"
     OUT = "out"
@@ -123,6 +234,14 @@ class StockMovement(models.Model):
         on_delete=models.CASCADE,
         related_name="movements",
         verbose_name="محصول",
+    )
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.CASCADE,
+        related_name="stock_movements",
+        verbose_name="انبار",
+        null=True,
+        blank=True
     )
     movement_type = models.CharField(
         max_length=15,
@@ -154,16 +273,38 @@ class StockMovement(models.Model):
 
     def save(self, *args, **kwargs):
         is_new = self._state.adding
-        super().save(*args, **kwargs)
-        if is_new:
-            product = self.product
+
+        if not is_new:
+            super().save(*args, **kwargs)
+            return
+
+        with transaction.atomic():
+            warehouse_stock, _ = WarehouseStock.objects.select_for_update().get_or_create(
+                warehouse=self.warehouse,
+                product=self.product,
+                defaults={
+                    "reorder_level": self.product.reorder_level,
+                },
+            )
+
             if self.movement_type == self.IN:
-                product.quantity_in_stock += self.quantity
+                warehouse_stock.quantity += self.quantity
+
             elif self.movement_type == self.OUT:
-                product.quantity_in_stock -= self.quantity
-            else:  # adjustment sets an absolute quantity
-                product.quantity_in_stock = self.quantity
-            product.save(update_fields=["quantity_in_stock", "updated_at"])
+                if warehouse_stock.quantity < self.quantity:
+                    raise ValueError("موجودی انبار کافی نیست.")
+
+                warehouse_stock.quantity -= self.quantity
+
+            elif self.movement_type == self.ADJUSTMENT:
+                warehouse_stock.quantity = self.quantity
+
+            warehouse_stock.save()
+
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.product.name}: {self.get_movement_type_display()} {self.quantity}"
+
+
+

@@ -25,3 +25,13 @@ class CustomerSerializer(serializers.ModelSerializer):
             "notes", "order_count", "total_spent", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def validate_assigned_to(self, value):
+        request = self.context.get("request")
+
+        if request and value.business_id != request.user.business_id:
+            raise serializers.ValidationError(
+                "این کاربر متعلق به کسب‌وکار شما نیست."
+            )
+
+        return value

@@ -25,6 +25,16 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "quantity_in_stock", "created_at", "updated_at"]
 
+    def validate_category(self, value):
+        request = self.context.get("request")
+
+        if request and value and value.business_id != request.user.business_id:
+            raise serializers.ValidationError(
+                "این دسته‌بندی متعلق به کسب‌وکار شما نیست."
+            )
+
+        return value
+
 
 class StockMovementSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source="product.name", read_only=True)
