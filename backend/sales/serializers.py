@@ -86,20 +86,12 @@ class OrderSerializer(serializers.ModelSerializer):
             )
         return instance
 
-    def _sync_items(self, order, items_data, deduct_stock):
-        request = self.context.get("request")
+    def _sync_items(self, order, items_data, deduct_stock=False):
         for item in items_data:
-            oi = OrderItem.objects.create(order=order, **item)
-            if deduct_stock:
-                StockMovement.objects.create(
-                    business=order.business,
-                    product=oi.product,
-                    warehouse=order.warehouse,
-                    movement_type=StockMovement.OUT,
-                    quantity=oi.quantity,
-                    reason=f"فروش سفارش {order.order_number}",
-                    created_by=getattr(request, "user", None),
-                )
+            OrderItem.objects.create(
+                order=order,
+                **item,
+            )
 
 
 class SalesReturnItemSerializer(serializers.ModelSerializer):

@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from core.viewsets import BusinessScopedViewSet
 from .models import Order, SalesReturnItem, SalesReturn
 from .serializers import OrderSerializer, SalesReturnItemSerializer, SalesReturnSerializer
-from sales.services import complete_sales_return
+from sales.services import complete_sales_return, confirm_order, change_order_status, pay_order, fulfill_order
 
 
 class OrderViewSet(BusinessScopedViewSet):
@@ -30,6 +30,75 @@ class OrderViewSet(BusinessScopedViewSet):
         if search:
             qs = qs.filter(Q(order_number__icontains=search) | Q(customer__name__icontains=search))
         return qs.order_by("-order_date", "-created_at")
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="confirm",
+    )
+    def confirm(self, request, pk=None):
+        order = self.get_object()
+
+        try:
+            order = confirm_order(order)
+        except ValueError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(order)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="pay",
+    )
+    def pay(self, request, pk=None):
+        order = self.get_object()
+
+        try:
+            order = pay_order(order)
+        except ValueError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(order)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="fulfill",
+    )
+    def fulfill(self, request, pk=None):
+        order = self.get_object()
+
+        try:
+            order = fulfill_order(order)
+        except ValueError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(order)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
 
 
 class SalesReturnViewSet(BusinessScopedViewSet):
