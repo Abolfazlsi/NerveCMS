@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     "inventory",
     "sales",
     "tasks",
+    "finance",
     "dashboard",
+
 ]
 
 AUTH_USER_MODEL = "accounts.User"
