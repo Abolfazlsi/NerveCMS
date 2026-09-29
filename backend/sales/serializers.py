@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from django.db import transaction
 from inventory.models import Product, StockMovement, Warehouse
-from .models import Order, OrderItem
+from .models import Order, OrderItem, SalesReturn, SalesReturnItem
+from decimal import Decimal
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -99,3 +100,82 @@ class OrderSerializer(serializers.ModelSerializer):
                     reason=f"فروش سفارش {order.order_number}",
                     created_by=getattr(request, "user", None),
                 )
+
+
+class SalesReturnItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(
+        source="product.name",
+        read_only=True,
+    )
+
+    class Meta:
+        model = SalesReturnItem
+        fields = [
+            "id",
+            "product",
+            "product_name",
+            "quantity",
+        ]
+        read_only_fields = ["id"]
+
+
+class SalesReturnSerializer(serializers.ModelSerializer):
+    items = SalesReturnItemSerializer(many=True)
+
+    class Meta:
+        model = SalesReturn
+        fields = [
+            "id",
+            "order",
+            "warehouse",
+            "reason",
+            "created_by",
+            "created_at",
+            "items",
+        ]
+        read_only_fields = [
+            "id",
+            "created_by",
+            "created_at",
+        ]
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+
+        if not request:
+            return attrs
+
+        business_id = request.user.business_id
+
+        order = attrs["order"]
+        warehouse = attrs["warehouse"]
+
+        if order.business_id != business_id:
+            raise serializers.ValidationError({
+                "order": "این سفارش متعلق به کسب‌وکار شما نیست."
+            })
+
+        if warehouse.business_id != business_id:
+            raise serializers.ValidationError({
+                "warehouse": "این انبار متعلق به کسب‌وکار شما نیست."
+            })
+
+        for item in self.initial_data.get("items", []):
+            product_id = item.get("product")
+
+            product = Product.objects.filter(
+                id=product_id,
+                business_id=business_id,
+            ).first()
+
+            if not product:
+                raise serializers.ValidationError({
+                    "items": "یکی از محصولات متعلق به کسب‌وکار شما نیست."
+                })
+
+            if Decimal(str(item.get("quantity", 0))) <= 0:
+                raise serializers.ValidationError({
+                    "items": "مقدار مرجوعی باید بیشتر از صفر باشد."
+                })
+
+        return attrs

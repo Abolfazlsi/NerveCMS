@@ -627,3 +627,79 @@ class PurchaseItem(models.Model):
     @property
     def total_price(self):
         return self.quantity * self.purchase_price
+
+
+class PurchaseReturn(models.Model):
+    DRAFT = "draft"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (DRAFT, "پیش‌نویس"),
+        (COMPLETED, "تکمیل شده"),
+        (CANCELLED, "لغو شده"),
+    ]
+
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name="purchase_returns",
+    )
+
+    purchase = models.ForeignKey(
+        Purchase,
+        on_delete=models.PROTECT,
+        related_name="returns",
+    )
+
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.PROTECT,
+        related_name="purchase_returns",
+    )
+
+    reason = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=DRAFT,
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+
+class PurchaseReturnItem(models.Model):
+    purchase_return = models.ForeignKey(
+        PurchaseReturn,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name="purchase_return_items",
+    )
+
+    quantity = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )

@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
-from inventory.models import Purchase, StockMovement, StockTransfer, WarehouseStock
+from inventory.models import Purchase, StockMovement, StockTransfer, WarehouseStock, PurchaseReturn
 
 
 @transaction.atomic
@@ -125,3 +125,79 @@ def complete_stock_transfer(transfer):
     )
 
     return transfer
+
+
+@transaction.atomic
+def adjust_stock(
+        *,
+        business,
+        product,
+        warehouse,
+        quantity,
+        reason,
+        created_by,
+):
+    warehouse_stock, _ = (
+        WarehouseStock.objects
+        .select_for_update()
+        .get_or_create(
+            warehouse=warehouse,
+            product=product,
+            defaults={
+                "reorder_level": product.reorder_level,
+            },
+        )
+    )
+
+    current_quantity = warehouse_stock.quantity
+
+    movement = StockMovement.objects.create(
+        business=business,
+        product=product,
+        warehouse=warehouse,
+        movement_type=StockMovement.ADJUSTMENT,
+        quantity=quantity,
+        reason=reason,
+        created_by=created_by,
+    )
+
+    return movement, current_quantity
+
+
+@transaction.atomic
+def complete_purchase_return(purchase_return):
+    purchase_return = (
+        PurchaseReturn.objects
+        .select_for_update()
+        .prefetch_related("items__product")
+        .get(pk=purchase_return.pk)
+    )
+
+    if purchase_return.status == PurchaseReturn.COMPLETED:
+        raise ValueError("این مرجوعی خرید قبلاً تکمیل شده است.")
+
+    if purchase_return.status == PurchaseReturn.CANCELLED:
+        raise ValueError("این مرجوعی خرید لغو شده و قابل تکمیل نیست.")
+
+    if not purchase_return.items.exists():
+        raise ValueError("مرجوعی خرید نمی‌تواند بدون محصول باشد.")
+
+    for item in purchase_return.items.all():
+        StockMovement.objects.create(
+            business=purchase_return.business,
+            product=item.product,
+            warehouse=purchase_return.warehouse,
+            movement_type=StockMovement.OUT,
+            quantity=item.quantity,
+            reason=f"مرجوعی خرید {purchase_return.purchase.purchase_number}",
+            created_by=purchase_return.created_by,
+        )
+
+    purchase_return.status = PurchaseReturn.COMPLETED
+    purchase_return.completed_at = timezone.now()
+
+    purchase_return.save(
+        update_fields=["status", "completed_at"]
+    )
+
+    return purchase_return

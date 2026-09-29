@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Category, Product, StockMovement, Warehouse, Purchase, PurchaseItem, Supplier, StockTransfer
+from .models import Category, Product, StockMovement, Warehouse, Purchase, PurchaseItem, Supplier, StockTransfer, \
+    PurchaseReturnItem, PurchaseReturn, WarehouseStock
+from decimal import Decimal
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -343,3 +345,160 @@ class WarehouseSerializer(serializers.ModelSerializer):
             )
 
         return attrs
+
+
+class StockAdjustmentSerializer(serializers.Serializer):
+    product = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all()
+    )
+
+    warehouse = serializers.PrimaryKeyRelatedField(
+        queryset=Warehouse.objects.all()
+    )
+
+    quantity = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=0,
+    )
+
+    reason = serializers.CharField(
+        max_length=255,
+        required=False,
+        allow_blank=True,
+    )
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+
+        if not request:
+            return attrs
+
+        business_id = request.user.business_id
+
+        product = attrs["product"]
+        warehouse = attrs["warehouse"]
+
+        if product.business_id != business_id:
+            raise serializers.ValidationError({
+                "product": "این محصول متعلق به کسب‌وکار شما نیست."
+            })
+
+        if warehouse.business_id != business_id:
+            raise serializers.ValidationError({
+                "warehouse": "این انبار متعلق به کسب‌وکار شما نیست."
+            })
+
+        return attrs
+
+
+class PurchaseReturnItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(
+        source="product.name",
+        read_only=True,
+    )
+
+    class Meta:
+        model = PurchaseReturnItem
+        fields = [
+            "id",
+            "product",
+            "product_name",
+            "quantity",
+        ]
+        read_only_fields = ["id"]
+
+
+class PurchaseReturnSerializer(serializers.ModelSerializer):
+    items = PurchaseReturnItemSerializer(many=True)
+
+    class Meta:
+        model = PurchaseReturn
+        fields = [
+            "id",
+            "purchase",
+            "warehouse",
+            "reason",
+            "status",
+            "created_by",
+            "created_at",
+            "completed_at",
+            "items",
+        ]
+        read_only_fields = [
+            "id",
+            "status",
+            "created_by",
+            "created_at",
+            "completed_at",
+        ]
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+
+        if not request:
+            return attrs
+
+        business_id = request.user.business_id
+
+        purchase = attrs["purchase"]
+        warehouse = attrs["warehouse"]
+
+        if purchase.business_id != business_id:
+            raise serializers.ValidationError({
+                "purchase": "این خرید متعلق به کسب‌وکار شما نیست."
+            })
+
+        if warehouse.business_id != business_id:
+            raise serializers.ValidationError({
+                "warehouse": "این انبار متعلق به کسب‌وکار شما نیست."
+            })
+
+        for item in self.initial_data.get("items", []):
+            product_id = item.get("product")
+
+            product = Product.objects.filter(
+                id=product_id,
+                business_id=business_id,
+            ).first()
+
+            if not product:
+                raise serializers.ValidationError({
+                    "items": "یکی از محصولات متعلق به کسب‌وکار شما نیست."
+                })
+
+            if Decimal(str(item.get("quantity", 0))) <= 0:
+                raise serializers.ValidationError({
+                    "items": "مقدار مرجوعی باید بیشتر از صفر باشد."
+                })
+
+        return attrs
+
+
+class WarehouseStockSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(
+        source="product.name",
+        read_only=True,
+    )
+    warehouse_name = serializers.CharField(
+        source="warehouse.name",
+        read_only=True,
+    )
+
+    class Meta:
+        model = WarehouseStock
+        fields = [
+            "id",
+            "warehouse",
+            "warehouse_name",
+            "product",
+            "product_name",
+            "quantity",
+            "reorder_level",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "quantity",
+            "updated_at",
+        ]

@@ -135,3 +135,80 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} × {self.product.name}"
+
+
+class SalesReturn(models.Model):
+    DRAFT = "draft"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (DRAFT, "پیش‌نویس"),
+        (COMPLETED, "تکمیل شده"),
+        (CANCELLED, "لغو شده"),
+    ]
+
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name="sales_returns",
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.PROTECT,
+        related_name="returns",
+    )
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.PROTECT,
+        related_name="sales_returns",
+    )
+    reason = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=DRAFT,
+    )
+
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "فروش مرجوع شده"
+        verbose_name_plural = "فروش های مرجوع شده"
+
+    def __str__(self):
+        return f"مرجوعی سفارش {self.order.order_number}"
+
+
+class SalesReturnItem(models.Model):
+    sales_return = models.ForeignKey(
+        SalesReturn,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name="sales_return_items",
+    )
+    quantity = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+
+    def __str__(self):
+        return f"{self.product.name} - {self.quantity}"
