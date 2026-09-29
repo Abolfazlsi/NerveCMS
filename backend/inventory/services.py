@@ -1,0 +1,127 @@
+from django.db import transaction
+from django.utils import timezone
+from inventory.models import Purchase, StockMovement, StockTransfer, WarehouseStock
+
+
+@transaction.atomic
+def receive_purchase(purchase):
+    purchase = (
+        Purchase.objects
+        .select_for_update()
+        .prefetch_related("items__product")
+        .get(pk=purchase.pk)
+    )
+
+    if purchase.status == Purchase.RECEIVED:
+        raise ValueError("این خرید قبلاً دریافت شده است.")
+
+    if purchase.status == Purchase.CANCELLED:
+        raise ValueError("خرید لغو شده و قابل دریافت نیست.")
+
+    if not purchase.items.exists():
+        raise ValueError("خرید نمی‌تواند بدون محصول دریافت شود.")
+
+    for item in purchase.items.all():
+        StockMovement.objects.create(
+            business=purchase.business,
+            product=item.product,
+            warehouse=purchase.warehouse,
+            movement_type=StockMovement.IN,
+            quantity=item.quantity,
+            reason=f"دریافت خرید {purchase.purchase_number}",
+        )
+
+    purchase.status = Purchase.RECEIVED
+
+    purchase.save(
+        update_fields=[
+            "status",
+            "updated_at",
+        ]
+    )
+
+    return purchase
+
+
+@transaction.atomic
+def complete_stock_transfer(transfer):
+    transfer = (
+        StockTransfer.objects
+        .select_for_update()
+        .select_related(
+            "product",
+            "source_warehouse",
+            "destination_warehouse",
+        )
+        .get(pk=transfer.pk)
+    )
+
+    if transfer.status == StockTransfer.COMPLETED:
+        raise ValueError("این انتقال قبلاً تکمیل شده است.")
+
+    if transfer.status == StockTransfer.CANCELLED:
+        raise ValueError("انتقال لغو شده و قابل تکمیل نیست.")
+
+    source_stock = (
+        WarehouseStock.objects
+        .select_for_update()
+        .filter(
+            warehouse=transfer.source_warehouse,
+            product=transfer.product,
+        )
+        .first()
+    )
+
+    if not source_stock:
+        raise ValueError(
+            "برای این محصول در انبار مبدأ موجودی ثبت نشده است."
+        )
+
+    if source_stock.quantity < transfer.quantity:
+        raise ValueError(
+            "موجودی انبار مبدأ برای این انتقال کافی نیست."
+        )
+
+    destination_stock, _ = (
+        WarehouseStock.objects
+        .select_for_update()
+        .get_or_create(
+            warehouse=transfer.destination_warehouse,
+            product=transfer.product,
+            defaults={
+                "reorder_level": transfer.product.reorder_level,
+            },
+        )
+    )
+
+    StockMovement.objects.create(
+        business=transfer.business,
+        product=transfer.product,
+        warehouse=transfer.source_warehouse,
+        movement_type=StockMovement.OUT,
+        quantity=transfer.quantity,
+        reason=f"انتقال به {transfer.destination_warehouse.name}",
+        created_by=transfer.created_by,
+    )
+
+    StockMovement.objects.create(
+        business=transfer.business,
+        product=transfer.product,
+        warehouse=transfer.destination_warehouse,
+        movement_type=StockMovement.IN,
+        quantity=transfer.quantity,
+        reason=f"انتقال از {transfer.source_warehouse.name}",
+        created_by=transfer.created_by,
+    )
+
+    transfer.status = StockTransfer.COMPLETED
+    transfer.completed_at = timezone.now()
+
+    transfer.save(
+        update_fields=[
+            "status",
+            "completed_at",
+        ]
+    )
+
+    return transfer

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db import transaction
-from inventory.models import Product, StockMovement
+from inventory.models import Product, StockMovement, Warehouse
 from .models import Order, OrderItem
 
 
@@ -33,7 +33,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            "id", "order_number", "customer", "customer_name", "status", "order_date",
+            "id", "order_number", "customer", "customer_name", "warehouse", "status", "order_date",
             "due_date", "notes", "items", "total_amount", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "order_number", "created_at", "updated_at"]
@@ -49,6 +49,16 @@ class OrderSerializer(serializers.ModelSerializer):
         if request and value.business_id != request.user.business_id:
             raise serializers.ValidationError(
                 "این مشتری متعلق به کسب‌وکار شما نیست."
+            )
+
+        return value
+
+    def validate_warehouse(self, value):
+        request = self.context.get("request")
+
+        if request and value.business_id != request.user.business_id:
+            raise serializers.ValidationError(
+                "این انبار متعلق به کسب‌وکار شما نیست."
             )
 
         return value
@@ -83,8 +93,9 @@ class OrderSerializer(serializers.ModelSerializer):
                 StockMovement.objects.create(
                     business=order.business,
                     product=oi.product,
+                    warehouse=order.warehouse,
                     movement_type=StockMovement.OUT,
                     quantity=oi.quantity,
-                    reason=f"Sold on {order.order_number}",
+                    reason=f"فروش سفارش {order.order_number}",
                     created_by=getattr(request, "user", None),
                 )

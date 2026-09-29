@@ -115,8 +115,8 @@ class DashboardSummaryView(APIView):
         # "Stock pulse": per-category stock health, feeds the signature widget.
         category_health = []
         for cat_row in products_qs.values("category__name").annotate(
-            total_products=Count("id"),
-            low_stock_count=Count("id", filter=Q(quantity_in_stock__lte=F("reorder_level"))),
+                total_products=Count("id"),
+                low_stock_count=Count("id", filter=Q(quantity_in_stock__lte=F("reorder_level"))),
         ):
             name = cat_row["category__name"] or "Uncategorised"
             total = cat_row["total_products"] or 1

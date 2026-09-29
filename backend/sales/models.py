@@ -3,7 +3,7 @@ from django.db import models
 from django.utils import timezone
 from tenants.models import Business
 from customers.models import Customer
-from inventory.models import Product, StockMovement
+from inventory.models import Product, StockMovement, Warehouse
 
 
 class Order(models.Model):
@@ -32,6 +32,15 @@ class Order(models.Model):
         on_delete=models.CASCADE,
         related_name="orders",
         verbose_name="مشتری",
+    )
+
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.PROTECT,
+        related_name="orders",
+        verbose_name="انبار",
+        null=True,
+        blank=True
     )
     order_number = models.CharField(
         max_length=30,

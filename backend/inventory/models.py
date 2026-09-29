@@ -307,4 +307,323 @@ class StockMovement(models.Model):
         return f"{self.product.name}: {self.get_movement_type_display()} {self.quantity}"
 
 
+class StockTransfer(models.Model):
+    DRAFT = "draft"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
 
+    STATUS_CHOICES = [
+        (DRAFT, "پیش‌نویس"),
+        (COMPLETED, "تکمیل شده"),
+        (CANCELLED, "لغو شده"),
+    ]
+
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name="stock_transfers",
+        verbose_name="کسب‌وکار",
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name="stock_transfers",
+        verbose_name="محصول",
+    )
+
+    source_warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.PROTECT,
+        related_name="outgoing_transfers",
+        verbose_name="انبار مبدأ",
+    )
+
+    destination_warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.PROTECT,
+        related_name="incoming_transfers",
+        verbose_name="انبار مقصد",
+    )
+
+    quantity = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="مقدار",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=DRAFT,
+        verbose_name="وضعیت",
+    )
+
+    reason = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="دلیل انتقال",
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_stock_transfers",
+        verbose_name="ایجادکننده",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="تاریخ ایجاد",
+    )
+
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="تاریخ تکمیل",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["business", "status"]),
+            models.Index(fields=["business", "created_at"]),
+        ]
+        verbose_name = "انتقال موجودی"
+        verbose_name_plural = "انتقال‌های موجودی"
+
+    def __str__(self):
+        return (
+            f"{self.product} - "
+            f"{self.source_warehouse} → "
+            f"{self.destination_warehouse}"
+        )
+
+
+class Supplier(models.Model):
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name="suppliers",
+        verbose_name="کسب‌وکار",
+    )
+
+    name = models.CharField(
+        max_length=150,
+        verbose_name="نام تأمین‌کننده",
+    )
+
+    company_name = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="نام شرکت",
+    )
+
+    phone = models.CharField(
+        max_length=30,
+        blank=True,
+        verbose_name="شماره تماس",
+    )
+
+    email = models.EmailField(
+        blank=True,
+        verbose_name="ایمیل",
+    )
+
+    address = models.TextField(
+        blank=True,
+        verbose_name="آدرس",
+    )
+
+    tax_number = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name="شناسه مالیاتی",
+    )
+
+    notes = models.TextField(
+        blank=True,
+        verbose_name="یادداشت",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="فعال",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="تاریخ ایجاد",
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="آخرین بروزرسانی",
+    )
+
+    class Meta:
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["business", "is_active"]),
+        ]
+        verbose_name = "تأمین‌کننده"
+        verbose_name_plural = "تأمین‌کنندگان"
+
+    def __str__(self):
+        return self.name
+
+
+class Purchase(models.Model):
+    DRAFT = "draft"
+    ORDERED = "ordered"
+    RECEIVED = "received"
+    CANCELLED = "cancelled"
+
+    STATUS_CHOICES = [
+        (DRAFT, "پیش‌نویس"),
+        (ORDERED, "سفارش داده شده"),
+        (RECEIVED, "دریافت شده"),
+        (CANCELLED, "لغو شده"),
+    ]
+
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name="purchases",
+        verbose_name="کسب‌وکار",
+    )
+
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.PROTECT,
+        related_name="purchases",
+        verbose_name="تأمین‌کننده",
+    )
+
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.PROTECT,
+        related_name="purchases",
+        verbose_name="انبار",
+    )
+
+    purchase_number = models.CharField(
+        max_length=50,
+        verbose_name="شماره خرید",
+    )
+
+    purchase_date = models.DateField(
+        verbose_name="تاریخ خرید",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=DRAFT,
+        verbose_name="وضعیت",
+    )
+
+    discount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="تخفیف",
+    )
+
+    tax = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="مالیات",
+    )
+
+    notes = models.TextField(
+        blank=True,
+        verbose_name="یادداشت",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="تاریخ ایجاد",
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="آخرین بروزرسانی",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["business", "purchase_number"],
+                name="unique_purchase_number_per_business",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["business", "status"]),
+            models.Index(fields=["business", "purchase_date"]),
+        ]
+        verbose_name = "خرید"
+        verbose_name_plural = "خریدها"
+
+    def __str__(self):
+        return self.purchase_number
+
+    @property
+    def subtotal(self):
+        return sum(
+            item.total_price
+            for item in self.items.all()
+        )
+
+    @property
+    def total_amount(self):
+        return self.subtotal - self.discount + self.tax
+
+
+class PurchaseItem(models.Model):
+    purchase = models.ForeignKey(
+        Purchase,
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name="خرید",
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name="purchase_items",
+        verbose_name="محصول",
+    )
+
+    quantity = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="تعداد",
+    )
+
+    purchase_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="قیمت خرید",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="تاریخ ایجاد",
+    )
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = "آیتم خرید"
+        verbose_name_plural = "آیتم‌های خرید"
+
+    def __str__(self):
+        return f"{self.product.name} - {self.quantity}"
+
+    @property
+    def total_price(self):
+        return self.quantity * self.purchase_price

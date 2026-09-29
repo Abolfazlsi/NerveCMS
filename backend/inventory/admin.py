@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Category, Product, StockMovement, Warehouse, WarehouseStock
+from .models import Category, Product, StockMovement, Warehouse, WarehouseStock, Purchase, PurchaseItem, Supplier, \
+    StockTransfer
 
 
 @admin.register(Category)
@@ -22,4 +23,7 @@ class StockMovementAdmin(admin.ModelAdmin):
 
 admin.site.register(Warehouse)
 admin.site.register(WarehouseStock)
-
+admin.site.register(Purchase)
+admin.site.register(PurchaseItem)
+admin.site.register(Supplier)
+admin.site.register(StockTransfer)
