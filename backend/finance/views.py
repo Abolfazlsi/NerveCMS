@@ -1,12 +1,14 @@
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
 
 from core.viewsets import BusinessScopedViewSet
-
-from finance.models import Invoice, Payment
-from finance.serializers import InvoiceSerializer, PaymentSerializer
-from finance.services import create_invoice_from_order, issue_invoice, create_payment, cancel_invoice
+from datetime import date
+from finance.models import Invoice, Payment, Expense
+from finance.serializers import InvoiceSerializer, PaymentSerializer, ExpenseSerializer
+from finance.services import create_invoice_from_order, issue_invoice, create_payment, cancel_invoice, \
+    get_financial_summary, get_financial_report, get_daily_financial_report, get_monthly_financial_report
 
 
 class InvoiceViewSet(BusinessScopedViewSet):
@@ -169,3 +171,198 @@ class PaymentViewSet(BusinessScopedViewSet):
             {"detail": "پرداخت ثبت‌شده قابل حذف نیست."},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
+
+
+class ExpenseViewSet(BusinessScopedViewSet):
+    serializer_class = ExpenseSerializer
+
+    def get_queryset(self):
+        qs = (
+            Expense.objects
+            .filter(
+                business=self.request.user.business
+            )
+            .select_related("created_by")
+            .order_by(
+                "-expense_date",
+                "-created_at",
+            )
+        )
+
+        category = self.request.query_params.get("category")
+
+        if category:
+            qs = qs.filter(category=category)
+
+        return qs
+
+
+class FinancialSummaryView(APIView):
+
+    def get(self, request):
+        business = request.user.business
+
+        summary = get_financial_summary(business)
+
+        return Response(summary)
+
+
+class FinancialReportView(APIView):
+
+    def get(self, request):
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        if not start_date or not end_date:
+            return Response(
+                {
+                    "detail": (
+                        "پارامترهای start_date و end_date "
+                        "الزامی هستند."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            start_date = date.fromisoformat(start_date)
+            end_date = date.fromisoformat(end_date)
+        except ValueError:
+            return Response(
+                {
+                    "detail": (
+                        "فرمت تاریخ باید به صورت "
+                        "YYYY-MM-DD باشد."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if start_date > end_date:
+            return Response(
+                {
+                    "detail": (
+                        "تاریخ شروع نمی‌تواند بعد از "
+                        "تاریخ پایان باشد."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        business = request.user.business
+
+        report = get_financial_report(
+            business=business,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        return Response(report)
+
+
+class DailyFinancialReportView(APIView):
+
+    def get(self, request):
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        if not start_date or not end_date:
+            return Response(
+                {
+                    "detail": (
+                        "پارامترهای start_date و end_date "
+                        "الزامی هستند."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            start_date = date.fromisoformat(start_date)
+            end_date = date.fromisoformat(end_date)
+
+        except ValueError:
+            return Response(
+                {
+                    "detail": (
+                        "فرمت تاریخ باید به صورت "
+                        "YYYY-MM-DD باشد."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if start_date > end_date:
+            return Response(
+                {
+                    "detail": (
+                        "تاریخ شروع نمی‌تواند بعد از "
+                        "تاریخ پایان باشد."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        business = request.user.business
+
+        report = get_daily_financial_report(
+            business=business,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        return Response(report)
+
+
+class MonthlyFinancialReportView(APIView):
+
+    def get(self, request):
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        if not start_date or not end_date:
+            return Response(
+                {
+                    "detail": (
+                        "پارامترهای start_date و end_date "
+                        "الزامی هستند."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            start_date = date.fromisoformat(start_date)
+            end_date = date.fromisoformat(end_date)
+
+        except ValueError:
+            return Response(
+                {
+                    "detail": (
+                        "فرمت تاریخ باید به صورت "
+                        "YYYY-MM-DD باشد."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if start_date > end_date:
+            return Response(
+                {
+                    "detail": (
+                        "تاریخ شروع نمی‌تواند بعد از "
+                        "تاریخ پایان باشد."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        business = request.user.business
+
+        report = get_monthly_financial_report(
+            business=business,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        return Response(report)

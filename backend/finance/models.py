@@ -193,3 +193,71 @@ class Payment(models.Model):
     def __str__(self):
         return f"{self.invoice.invoice_number} - {self.amount}"
 
+
+class Expense(models.Model):
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name="expenses",
+        verbose_name="کسب‌وکار",
+    )
+
+    title = models.CharField(
+        max_length=255,
+        verbose_name="عنوان هزینه",
+    )
+
+    amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        verbose_name="مبلغ",
+    )
+
+    category = models.CharField(
+        max_length=100,
+        verbose_name="دسته‌بندی",
+    )
+
+    description = models.TextField(
+        blank=True,
+        verbose_name="توضیحات",
+    )
+
+    expense_date = models.DateField(
+        verbose_name="تاریخ هزینه",
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_expenses",
+        verbose_name="ثبت‌کننده",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="تاریخ ثبت",
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="تاریخ بروزرسانی",
+    )
+
+    class Meta:
+        ordering = ["-expense_date", "-created_at"]
+        indexes = [
+            models.Index(
+                fields=["business", "expense_date"]
+            ),
+            models.Index(
+                fields=["business", "category"]
+            ),
+        ]
+        verbose_name = "هزینه"
+        verbose_name_plural = "هزینه‌ها"
+
+    def __str__(self):
+        return f"{self.title} - {self.amount}"

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from finance.models import Invoice, Payment
+from finance.models import Invoice, Payment, Expense
 
 
 class InvoiceSerializer(serializers.ModelSerializer):
@@ -143,6 +143,55 @@ class PaymentSerializer(serializers.ModelSerializer):
         if value > timezone.now():
             raise serializers.ValidationError(
                 "تاریخ پرداخت نمی‌تواند در آینده باشد."
+            )
+
+        return value
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.CharField(
+        source="created_by.username",
+        read_only=True,
+    )
+
+    class Meta:
+        model = Expense
+
+        fields = [
+            "id",
+            "title",
+            "amount",
+            "category",
+            "description",
+            "expense_date",
+            "created_by",
+            "created_by_name",
+            "created_at",
+            "updated_at",
+        ]
+
+        read_only_fields = [
+            "id",
+            "created_by",
+            "created_by_name",
+            "created_at",
+            "updated_at",
+        ]
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError(
+                "مبلغ هزینه باید بیشتر از صفر باشد."
+            )
+
+        return value
+
+    def validate_expense_date(self, value):
+        from django.utils import timezone
+
+        if value > timezone.localdate():
+            raise serializers.ValidationError(
+                "تاریخ هزینه نمی‌تواند در آینده باشد."
             )
 
         return value
