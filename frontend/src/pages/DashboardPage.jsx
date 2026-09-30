@@ -12,6 +12,8 @@ import StockPulse from "../components/StockPulse";
 import { useAuth } from "../context/AuthContext";
 import { formatCurrency, formatDate } from "../utils/format";
 
+const PIPELINE_LABELS = { active: "فعال", lead: "سرنخ", inactive: "غیرفعال", prospect: "محتمل" };
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
@@ -26,68 +28,26 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner />
-      </div>
+      <div className="flex items-center justify-center py-24"><Spinner /></div>
     );
   }
 
   if (!data) {
-    return (
-      <EmptyState
-        title="داشبورد بارگذاری نشد"
-        description="لطفاً صفحه را رفرش کنید."
-      />
-    );
+    return <EmptyState title="داشبورد بارگذاری نشد" description="لطفاً صفحه را رفرش کنید." />;
   }
 
   const { stats, revenue_trend, low_stock, upcoming_tasks, pipeline, top_products, category_health } = data;
   const firstName = user?.first_name || user?.username;
 
-  // نگاشت وضعیت‌های پایپ‌لاین به فارسی
-  const statusLabels = {
-    active: "فعال",
-    lead: "سرنخ",
-    inactive: "غیرفعال",
-    prospect: "محتمل",
-  };
-
   return (
     <div>
-      <PageHeader
-        title={`خوش آمدید، ${firstName}`}
-        description="نگاهی به وضعیت کسب‌وکار امروز"
-      />
+      <PageHeader title={`خوش آمدید، ${firstName}`} description="نگاهی به وضعیت کسب‌وکار امروز" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          label="کل مشتریان"
-          value={stats.total_customers}
-          sub={`+${stats.new_customers_this_month} این ماه`}
-          icon={Users}
-          tone="brand"
-        />
-        <StatCard
-          label="درآمد این ماه"
-          value={formatCurrency(stats.revenue_this_month)}
-          sub={`${formatCurrency(stats.total_revenue)} کل`}
-          icon={DollarSign}
-          tone="good"
-        />
-        <StatCard
-          label="سفارش‌های این ماه"
-          value={stats.orders_this_month}
-          sub={`${stats.paid_orders_count} سفارش پرداخت‌شده کل`}
-          icon={ShoppingCart}
-          tone="brand"
-        />
-        <StatCard
-          label="هشدار کمبود موجودی"
-          value={stats.low_stock_count}
-          sub={`${stats.active_products} محصول فعال`}
-          icon={PackageX}
-          tone={stats.low_stock_count > 0 ? "warn" : "good"}
-        />
+        <StatCard label="کل مشتریان" value={stats.total_customers} sub={`+${stats.new_customers_this_month} این ماه`} icon={Users} tone="brand" />
+        <StatCard label="درآمد این ماه" value={formatCurrency(stats.revenue_this_month)} sub={`${formatCurrency(stats.total_revenue)} کل`} icon={DollarSign} tone="good" />
+        <StatCard label="سفارش‌های این ماه" value={stats.orders_this_month} sub={`${stats.paid_orders_count} سفارش پرداخت‌شده کل`} icon={ShoppingCart} tone="brand" />
+        <StatCard label="هشدار کمبود موجودی" value={stats.low_stock_count} sub={`${stats.active_products} محصول فعال`} icon={PackageX} tone={stats.low_stock_count > 0 ? "warn" : "good"} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
@@ -100,10 +60,7 @@ export default function DashboardPage() {
             <TrendingUp className="w-5 h-5 text-good-600" />
           </div>
           {revenue_trend.length === 0 ? (
-            <EmptyState
-              title="هنوز درآمدی ثبت نشده"
-              description="سفارش‌های پرداخت‌شده پس از شروع فروش اینجا نمایش داده می‌شوند."
-            />
+            <EmptyState title="هنوز درآمدی ثبت نشده" description="سفارش‌های پرداخت‌شده پس از شروع فروش اینجا نمایش داده می‌شوند." />
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={revenue_trend}>
@@ -116,10 +73,7 @@ export default function DashboardPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} width={50} />
-                <Tooltip
-                  formatter={(value) => formatCurrency(value)}
-                  contentStyle={{ borderRadius: 12, border: "1px solid #f1f5f9", fontSize: 13 }}
-                />
+                <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ borderRadius: 12, border: "1px solid #f1f5f9", fontSize: 13 }} />
                 <Area type="monotone" dataKey="total" stroke="#0d9488" strokeWidth={2.5} fill="url(#revGradient)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -133,7 +87,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
         <Card className="p-5">
           <h3 className="font-display font-semibold text-ink-900 mb-4">قیف فروش</h3>
           {pipeline.length === 0 ? (
@@ -143,9 +97,31 @@ export default function DashboardPage() {
               {pipeline.map((row) => (
                 <div key={row.status} className="flex items-center justify-between">
                   <Badge tone={row.status === "active" ? "good" : row.status === "lead" ? "accent" : "neutral"}>
-                    {statusLabels[row.status] || row.status}
+                    {PIPELINE_LABELS[row.status] || row.status}
                   </Badge>
                   <span className="text-sm font-medium text-ink-900 font-mono">{row.count}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-semibold text-ink-900">کمبود موجودی</h3>
+            <PackageX className="w-4 h-4 text-warn-600" />
+          </div>
+          {low_stock.length === 0 ? (
+            <p className="text-sm text-ink-500">همه محصولات موجودی کافی دارند.</p>
+          ) : (
+            <div className="space-y-3">
+              {low_stock.map((p) => (
+                <div key={p.id} className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm text-ink-900 truncate">{p.name}</p>
+                    <p className="text-xs text-ink-500 font-mono">{p.sku}</p>
+                  </div>
+                  <Badge tone="warn">{p.quantity_in_stock} / {p.reorder_level}</Badge>
                 </div>
               ))}
             </div>
