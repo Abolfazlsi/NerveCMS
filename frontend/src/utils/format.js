@@ -2,7 +2,7 @@
 // Currency is still USD (per the backend's default currency) but numbers
 // are rendered with Persian-friendly separators via the fa-IR locale.
 
-export function formatCurrency(value, currency = "USD") {
+export function formatCurrency(value, currency = "تومان") {
     const num = Number(value || 0);
     try {
         return new Intl.NumberFormat("fa-IR", {style: "currency", currency, maximumFractionDigits: 2}).format(num);

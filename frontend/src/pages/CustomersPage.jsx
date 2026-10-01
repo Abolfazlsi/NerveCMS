@@ -11,7 +11,7 @@ import Drawer from "../components/Drawer";
 import { useToast, errMsg } from "../components/Toast";
 import { useAuth } from "../context/AuthContext";
 import { collectAll } from "../utils/fetch";
-import { CUSTOMER_STATUS, CUSTOMER_SOURCE, isAdmin } from "../utils/constants";
+import { CUSTOMER_STATUS, CUSTOMER_SOURCE, ORDER_STATUS, isAdmin } from "../utils/constants";
 import { formatCurrency, formatDate, formatDateTime } from "../utils/format";
 
 const PAGE_SIZE = 25;
@@ -345,7 +345,7 @@ export default function CustomersPage() {
               <Field label="منبع" value={CUSTOMER_SOURCE[detail.source]} />
               <Field label="ارزش تخمینی" value={formatCurrency(detail.estimated_value)} mono />
               <Field label="برچسب‌ها" value={detail.tags} />
-              <Field label="مسئول" value={detail.assigned_name} />
+              <Field label="مسئول" value={detail.assigned_to_name} />
               <div className="col-span-2">
                 <Field label="آدرس" value={detail.address} />
               </div>
@@ -408,7 +408,7 @@ export default function CustomersPage() {
                         <p className="text-xs text-ink-500">{formatDate(o.order_date)}</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge tone={(CUSTOMER_STATUS[o.status] || { tone: "neutral" }).tone}>{o.status}</Badge>
+                        <Badge tone={(ORDER_STATUS[o.status] || { tone: "neutral" }).tone}>{ORDER_STATUS[o.status]?.label || o.status}</Badge>
                         <span className="text-sm font-mono text-ink-900">{formatCurrency(o.total_amount)}</span>
                       </div>
                     </div>

@@ -4,6 +4,7 @@ import { tasksApi, customersApi, authApi } from "../api/endpoints";
 import { PageHeader, Button, Card, Badge, Input, Select, TextArea, Modal, EmptyState, Spinner } from "../components/ui";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useToast, errMsg } from "../components/Toast";
+import { useAuth } from "../context/AuthContext";
 import { TASK_STATUS, TASK_PRIORITY, isAdmin } from "../utils/constants";
 import { collectAll } from "../utils/fetch";
 import { formatDate } from "../utils/format";

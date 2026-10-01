@@ -6,7 +6,7 @@ import {
 import {useState} from "react";
 import clsx from "clsx";
 import {useAuth} from "../context/AuthContext";
-import webelopIcon from "../assets/webelop-icon.png";
+import webelopIcon from "../assets/cms-icon.png";
 
 // Nav groups: each section has a header and items. Roles gate which items appear.
 const NAV_SECTIONS = [
@@ -62,8 +62,8 @@ function SidebarContent({onNavigate}) {
     return (
         <div className="flex flex-col h-full bg-ink-950 text-ink-300">
             <div className="px-6 py-6 flex items-center gap-2.5">
+                <span className="font-display font-semibold text-white text-lg tracking-tight">Nerve CMS</span>
                 <img src={webelopIcon} alt="" className="w-8 h-8 object-contain shrink-0"/>
-                <span className="font-display font-semibold text-white text-lg tracking-tight">Webelop</span>
             </div>
 
             <div className="px-4 mb-2">
@@ -157,7 +157,7 @@ export default function AppLayout() {
                     <button onClick={() => setMobileOpen(true)} aria-label="Open menu">
                         <Menu className="w-6 h-6 text-ink-700"/>
                     </button>
-                    <span className="font-display font-semibold text-ink-900">Webelop</span>
+                    <span className="font-display font-semibold text-ink-900">Nerve CMS</span>
                     <div className="w-6"/>
                 </header>
                 <main className="flex-1 overflow-y-auto">

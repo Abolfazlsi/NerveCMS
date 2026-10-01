@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Search, Package, AlertTriangle, Upload, Trash2, History, Tag, Edit3 } from "lucide-react";
+import { Plus, Search, Package, AlertTriangle, Upload, Trash2, History, Tag, Edit3, SlidersHorizontal } from "lucide-react";
 import { inventoryApi } from "../api/endpoints";
 import {
   PageHeader, Button, Card, Badge, Input, Select, Modal, EmptyState, Spinner,
@@ -324,10 +324,10 @@ export default function InventoryPage() {
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => openHistory(p)} className="w-8 h-8 rounded-lg hover:bg-ink-100 text-ink-500 hover:text-brand-600 flex items-center justify-center" aria-label="تاریخچه"><History className="w-4 h-4" /></button>
                         {writable && (
-                          <button onClick={() => setAdjustModal(p)} className="w-8 h-8 rounded-lg hover:bg-ink-100 text-ink-500 hover:text-brand-600 flex items-center justify-center" aria-label="تنظیم موجودی"><Edit3 className="w-4 h-4" /></button>
+                          <button onClick={() => setAdjustModal(p)} className="w-8 h-8 rounded-lg hover:bg-ink-100 text-ink-500 hover:text-brand-600 flex items-center justify-center" aria-label="تنظیم موجودی"><SlidersHorizontal className="w-4 h-4" /></button>
                         )}
                         {writable && (
-                          <button onClick={() => openEdit(p)} className="w-8 h-8 rounded-lg hover:bg-ink-100 text-ink-500 hover:text-brand-600 flex items-center justify-center" aria-label="ویرایش"><Package className="w-4 h-4" /></button>
+                          <button onClick={() => openEdit(p)} className="w-8 h-8 rounded-lg hover:bg-ink-100 text-ink-500 hover:text-brand-600 flex items-center justify-center" aria-label="ویرایش"><Edit3 className="w-4 h-4" /></button>
                         )}
                         {admin && (
                           <button onClick={() => setToDelete(p)} className="w-8 h-8 rounded-lg hover:bg-bad-100 text-ink-500 hover:text-bad-600 flex items-center justify-center" aria-label="حذف"><Trash2 className="w-4 h-4" /></button>
