@@ -12,14 +12,12 @@ from pathlib import Path
 from decouple import Csv, config
 import dj_database_url
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # --------------------------------------------------------------------------
 # Core
 # --------------------------------------------------------------------------
-SECRET_KEY = config("DJANGO_SECRET_KEY", default="dev-only-insecure-key-change-me")
-DEBUG = config("DJANGO_DEBUG", default=True, cast=bool)
-ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
+SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 # --------------------------------------------------------------------------
 # Applications
@@ -93,18 +91,6 @@ WSGI_APPLICATION = "crm_project.wsgi.application"
 # Set DATABASE_URL (from Supabase: Project Settings > Database > Connection
 # string > URI) to switch on Postgres automatically.
 # --------------------------------------------------------------------------
-DATABASE_URL = config("DATABASE_URL", default="")
-if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -190,7 +176,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
 
-if not DEBUG:
+if not config("DEBUG"):
     SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

@@ -1,16 +1,14 @@
-"""
-ASGI config for crm_project project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.0/howto/deployment/asgi/
-"""
-
 import os
-
+from decouple import config
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'crm_project.settings')
+django_env = config("DJANGO_ENV", default="development")
+
+if django_env == "production":
+    settings_module = "crm_project.settings.production"
+else:
+    settings_module = "crm_project.settings.development"
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
 
 application = get_asgi_application()

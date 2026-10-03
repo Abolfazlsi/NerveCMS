@@ -20,6 +20,7 @@ from django.contrib import admin
 from django.urls import include, path
 from django.http import JsonResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from decouple import config
 
 
 def health(request):
@@ -42,5 +43,5 @@ urlpatterns = [
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
-if settings.DEBUG:
+if config("DEBUG"):
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
