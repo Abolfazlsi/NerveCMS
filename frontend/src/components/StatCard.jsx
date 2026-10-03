@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { Card } from "./ui";
 
-export default function StatCard({ label, value, sub, icon: Icon, tone = "brand" }) {
+export default function StatCard({ label, value, sub, icon: Icon, tone = "brand", children }) {
   const tones = {
     brand: "bg-brand-100 text-brand-600",
     good: "bg-good-100 text-good-600",
@@ -11,10 +11,11 @@ export default function StatCard({ label, value, sub, icon: Icon, tone = "brand"
   return (
     <Card className="p-5">
       <div className="flex items-start justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm text-ink-500 mb-1.5">{label}</p>
           <p className="font-display font-semibold text-2xl text-ink-900">{value}</p>
           {sub && <p className="text-xs text-ink-500 mt-1.5">{sub}</p>}
+          {children && <div className="mt-1">{children}</div>}
         </div>
         {Icon && (
           <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", tones[tone])}>

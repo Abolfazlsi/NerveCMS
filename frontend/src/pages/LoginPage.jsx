@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button, Input, Card } from "../components/ui";
-import webelopLogo from "../assets/webelop-logo.png";
+import webelopLogo from "../assets/cms-icon.png";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ username: "", password: "" });
@@ -40,7 +40,7 @@ export default function LoginPage() {
 
         <Card className="p-7 sm:p-8">
           <h1 className="font-display font-semibold text-xl text-ink-900 mb-1">خوش آمدید</h1>
-          <p className="text-sm text-ink-500 mb-6">وارد فضای کاری CRM خود شوید.</p>
+          <p className="text-sm text-ink-500 mb-6">وارد فضای CMS خود شوید.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input

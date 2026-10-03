@@ -10,7 +10,7 @@ import { Card, PageHeader, Badge, Spinner, EmptyState } from "../components/ui";
 import StatCard from "../components/StatCard";
 import StockPulse from "../components/StockPulse";
 import { useAuth } from "../context/AuthContext";
-import { formatCurrency, formatDate } from "../utils/format";
+import { formatCurrency, formatDate, formatInt, formatJalaliMonth, formatCompactNumber } from "../utils/format";
 
 const PIPELINE_LABELS = { active: "فعال", lead: "سرنخ", inactive: "غیرفعال", prospect: "محتمل" };
 
@@ -44,10 +44,10 @@ export default function DashboardPage() {
       <PageHeader title={`خوش آمدید، ${firstName}`} description="نگاهی به وضعیت کسب‌وکار امروز" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        <StatCard label="کل مشتریان" value={stats.total_customers} sub={`+${stats.new_customers_this_month} این ماه`} icon={Users} tone="brand" />
+        <StatCard label="کل مشتریان" value={formatInt(stats.total_customers)} sub={`+${formatInt(stats.new_customers_this_month)} این ماه`} icon={Users} tone="brand" />
         <StatCard label="درآمد این ماه" value={formatCurrency(stats.revenue_this_month)} sub={`${formatCurrency(stats.total_revenue)} کل`} icon={DollarSign} tone="good" />
-        <StatCard label="سفارش‌های این ماه" value={stats.orders_this_month} sub={`${stats.paid_orders_count} سفارش پرداخت‌شده کل`} icon={ShoppingCart} tone="brand" />
-        <StatCard label="هشدار کمبود موجودی" value={stats.low_stock_count} sub={`${stats.active_products} محصول فعال`} icon={PackageX} tone={stats.low_stock_count > 0 ? "warn" : "good"} />
+        <StatCard label="سفارش‌های این ماه" value={formatInt(stats.orders_this_month)} sub={`${formatInt(stats.paid_orders_count)} سفارش پرداخت‌شده کل`} icon={ShoppingCart} tone="brand" />
+        <StatCard label="هشدار کمبود موجودی" value={formatInt(stats.low_stock_count)} sub={`${formatInt(stats.active_products)} محصول فعال`} icon={PackageX} tone={stats.low_stock_count > 0 ? "warn" : "good"} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
@@ -71,10 +71,10 @@ export default function DashboardPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} width={50} />
-                <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ borderRadius: 12, border: "1px solid #f1f5f9", fontSize: 13 }} />
-                <Area type="monotone" dataKey="total" stroke="#0d9488" strokeWidth={2.5} fill="url(#revGradient)" />
+                <XAxis dataKey="month" tickFormatter={formatJalaliMonth} tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} minTickGap={16} />
+                <YAxis tickFormatter={formatCompactNumber} tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} width={64} />
+                <Tooltip content={<RevenueTooltip />} cursor={{ stroke: "#cbd5e1", strokeWidth: 1, strokeDasharray: "4 4" }} />
+                <Area type="monotone" dataKey="total" name="درآمد" stroke="#0d9488" strokeWidth={2.5} fill="url(#revGradient)" activeDot={{ r: 5, fill: "#0d9488" }} />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -99,7 +99,7 @@ export default function DashboardPage() {
                   <Badge tone={row.status === "active" ? "good" : row.status === "lead" ? "accent" : "neutral"}>
                     {PIPELINE_LABELS[row.status] || row.status}
                   </Badge>
-                  <span className="text-sm font-medium text-ink-900 font-mono">{row.count}</span>
+                  <span className="text-sm font-medium text-ink-900 font-mono">{formatInt(row.count)}</span>
                 </div>
               ))}
             </div>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                     <p className="text-sm text-ink-900 truncate">{p.name}</p>
                     <p className="text-xs text-ink-500 font-mono">{p.sku}</p>
                   </div>
-                  <Badge tone="warn">{p.quantity_in_stock} / {p.reorder_level}</Badge>
+                  <Badge tone="warn">{formatInt(p.quantity_in_stock)} / {formatInt(p.reorder_level)}</Badge>
                 </div>
               ))}
             </div>
@@ -165,6 +165,36 @@ export default function DashboardPage() {
             </div>
           )}
         </Card>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Custom tooltip for the revenue-trend AreaChart.
+ * Renders the Jalali month as a full Persian label ("مهر ۱۴۰۳") plus the
+ * formatted currency value, in a styled card that matches the app's
+ * rounded, soft-shadow design language.
+ */
+function RevenueTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  const value = payload[0]?.value ?? 0;
+  return (
+    <div className="rounded-xl border border-ink-100 bg-white shadow-lg p-3 max-w-xs">
+      <p className="text-xs font-medium text-ink-500 mb-1.5">
+        {formatJalaliMonth(label)}
+      </p>
+      <div className="flex items-center justify-between gap-4 text-sm">
+        <span className="flex items-center gap-1.5 text-ink-600">
+          <span
+            className="w-2.5 h-2.5 rounded-full inline-block"
+            style={{ backgroundColor: "#0d9488" }}
+          />
+          درآمد
+        </span>
+        <span className="font-mono text-ink-900 font-medium">
+          {formatCurrency(value)}
+        </span>
       </div>
     </div>
   );

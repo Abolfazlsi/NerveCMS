@@ -62,7 +62,7 @@ class DashboardSummaryView(APIView):
             .order_by("month")
         )
         revenue_trend = [
-            {"month": row["month"].strftime("%b %Y"), "total": float(row["total"] or 0)} for row in monthly
+            {"month": row["month"].strftime("%Y-%m-%d"), "total": float(row["total"] or 0)} for row in monthly
         ]
 
         low_stock_qs = products_qs.filter(quantity_in_stock__lte=F("reorder_level")).order_by(
