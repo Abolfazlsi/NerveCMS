@@ -16,8 +16,8 @@
 
 | Backend | Frontend | Database & API |
 |---|---|---|
-| Python · Django 5 | React 19 · Vite | SQLite |
-| Django REST Framework | React Router | PostgreSQL configuration |
+| Python · Django 5 | React 19 · Vite | SQLite (Development) |
+| Django REST Framework | React Router | PostgreSQL (Production) |
 | Simple JWT | Axios | REST API · JSON |
 | drf-spectacular | Tailwind CSS 4 | OpenAPI / Swagger UI |
 
