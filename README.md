@@ -35,7 +35,7 @@ flowchart LR
 ### 📁 Project Structure
 
 ```text
-nexus-crm/
+NerveCMS/
 ├── backend/
 │   ├── accounts/     # Authentication and user roles
 │   ├── customers/    # Customer management
