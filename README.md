@@ -97,14 +97,6 @@ Configure the API URL in `frontend/.env` if needed:
 VITE_API_URL=http://127.0.0.1:8000/api
 ```
 
-## 🚢 Deployment
-
-Deployment configurations are included for **Render** (backend) and **Vercel** (frontend).
-
-## 👨‍💻 Project Highlights
-
-This project demonstrates full-stack development, REST API design, JWT authentication, role-based access control, multi-tenant architecture, and modern frontend development.
-
 ---
 
 **Built with ❤️ using Django REST Framework and React.**
