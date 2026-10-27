@@ -7,7 +7,7 @@
 // So `new Date("2024-10-01").toLocaleDateString("fa-IR", { month: "long",
 // year: "numeric" })` returns "مهر ۱۴۰۳" — no external Jalali library is needed.
 
-export function formatCurrency(value, currency = "USD") {
+export function formatCurrency(value, currency = "تومان") {
   const num = Number(value || 0);
   try {
     return new Intl.NumberFormat("fa-IR", { style: "currency", currency, maximumFractionDigits: 2 }).format(num);
